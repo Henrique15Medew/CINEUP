@@ -1,0 +1,1074 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CINEUP - Catálogo de Filmes</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --primary: #0a84ff;
+      --primary-dark: #0066cc;
+      --primary-light: #4da8ff;
+      --dark: #0a0a0a;
+      --darker: #050505;
+      --dark-gray: #1a1a1a;
+      --medium-gray: #2a2a2a;
+      --light-gray: #6c757d;
+      --light: #ffffff;
+      --accent: #00d4ff;
+      --success: #28a745;
+      --warning: #ffc107;
+      --danger: #e50914;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background-color: var(--darker);
+      color: var(--light);
+      line-height: 1.6;
+    }
+
+    /* Header */
+    header {
+      background: linear-gradient(135deg, var(--dark) 0%, var(--dark-gray) 100%);
+      padding: 20px 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+      border-bottom: 2px solid var(--primary);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo-icon {
+      font-size: 32px;
+      color: var(--primary);
+    }
+
+    .logo h1 {
+      color: var(--light);
+      font-size: 28px;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .header-buttons {
+      display: flex;
+      gap: 10px;
+    }
+
+    .nav-btn {
+      padding: 8px 16px;
+      background: rgba(255, 255, 255, 0.1);
+      color: var(--light);
+      text-decoration: none;
+      border-radius: 6px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      border: 1px solid var(--medium-gray);
+      font-size: 14px;
+    }
+
+    .nav-btn:hover {
+      background: var(--primary);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(10, 132, 255, 0.3);
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 15px;
+      align-items: center;
+    }
+
+    .btn {
+      padding: 10px 18px;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(10, 132, 255, 0.3);
+    }
+
+    .btn-danger {
+      background: linear-gradient(135deg, var(--danger), #b00610);
+      color: white;
+    }
+
+    .btn-danger:hover {
+      background: linear-gradient(135deg, #b00610, var(--danger));
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(229, 9, 20, 0.3);
+    }
+
+    /* Main Content */
+    main {
+      padding: 40px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid var(--medium-gray);
+    }
+
+    .page-title {
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--light);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .page-title i {
+      color: var(--primary);
+    }
+
+    .filters {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 30px;
+      flex-wrap: wrap;
+    }
+
+    .filter-select {
+      background: var(--dark-gray);
+      color: var(--light);
+      border: 1px solid var(--medium-gray);
+      border-radius: 6px;
+      padding: 10px 15px;
+      font-size: 14px;
+      min-width: 150px;
+    }
+
+    .search-box {
+      flex-grow: 1;
+      max-width: 400px;
+      position: relative;
+    }
+
+    .search-box input {
+      width: 100%;
+      padding: 10px 15px 10px 40px;
+      border-radius: 6px;
+      background: var(--dark-gray);
+      border: 1px solid var(--medium-gray);
+      color: var(--light);
+      font-size: 14px;
+    }
+
+    .search-box i {
+      position: absolute;
+      left: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--light-gray);
+    }
+
+    /* Grid de Filmes */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 25px;
+    }
+
+    .card {
+      background: linear-gradient(145deg, var(--dark-gray), var(--medium-gray));
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 6px 15px rgba(0, 0, 0, 0.4);
+      transition: all 0.3s ease;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      position: relative;
+    }
+
+    .card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 12px 20px rgba(0, 0, 0, 0.6);
+      border-color: var(--primary-light);
+    }
+
+    .card-badge {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      background: var(--primary);
+      color: white;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 600;
+      z-index: 2;
+    }
+
+    .card-img {
+      width: 100%;
+      height: 320px;
+      object-fit: cover;
+      display: block;
+    }
+
+    .card-content {
+      padding: 18px;
+    }
+
+    .card-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--light);
+      line-height: 1.3;
+    }
+
+    .card-meta {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      font-size: 14px;
+      color: var(--light-gray);
+    }
+
+    .card-genre {
+      color: var(--primary-light);
+    }
+
+    .card-rating {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .card-rating i {
+      color: var(--warning);
+    }
+
+    .card-description {
+      font-size: 14px;
+      color: var(--light-gray);
+      margin-bottom: 15px;
+      line-height: 1.5;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .card-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .card-btn {
+      flex: 1;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      text-align: center;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+    }
+
+    .watch-btn {
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: white;
+    }
+
+    .watch-btn:hover {
+      background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+      box-shadow: 0 4px 8px rgba(10, 132, 255, 0.3);
+    }
+
+    .details-btn {
+      background: var(--medium-gray);
+      color: var(--light);
+      border: 1px solid var(--light-gray);
+    }
+
+    .details-btn:hover {
+      background: var(--light-gray);
+      color: var(--dark);
+    }
+
+    /* Modal de Detalhes */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal-content {
+      background: linear-gradient(145deg, var(--dark-gray), var(--darker));
+      border-radius: 12px;
+      width: 100%;
+      max-width: 800px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+      border: 1px solid var(--primary);
+    }
+
+    .modal-header {
+      padding: 20px 25px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-title {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--light);
+    }
+
+    .close-btn {
+      background: none;
+      border: none;
+      color: var(--light-gray);
+      font-size: 24px;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+
+    .close-btn:hover {
+      color: var(--light);
+    }
+
+    .modal-body {
+      padding: 20px 25px;
+    }
+
+    .movie-details {
+      display: flex;
+      gap: 25px;
+      margin-bottom: 25px;
+    }
+
+    .movie-poster {
+      flex: 0 0 250px;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .movie-poster img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .movie-info {
+      flex: 1;
+    }
+
+    .movie-meta {
+      display: flex;
+      gap: 20px;
+      margin-bottom: 15px;
+      flex-wrap: wrap;
+    }
+
+    .meta-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      color: var(--light-gray);
+      font-size: 14px;
+    }
+
+    .meta-item i {
+      color: var(--primary);
+    }
+
+    .movie-description {
+      margin-bottom: 20px;
+      line-height: 1.6;
+    }
+
+    .rating-section {
+      margin-bottom: 25px;
+    }
+
+    .rating-title {
+      font-size: 18px;
+      margin-bottom: 10px;
+      color: var(--light);
+    }
+
+    .stars {
+      display: flex;
+      gap: 5px;
+      margin-bottom: 15px;
+    }
+
+    .star {
+      color: var(--light-gray);
+      font-size: 24px;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+
+    .star.active {
+      color: var(--warning);
+    }
+
+    .user-rating {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+
+    .rating-value {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--warning);
+    }
+
+    .rating-count {
+      color: var(--light-gray);
+      font-size: 14px;
+    }
+
+    .review-form {
+      margin-top: 20px;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+      color: var(--light);
+      font-weight: 500;
+    }
+
+    .form-control {
+      width: 100%;
+      padding: 10px 15px;
+      border-radius: 6px;
+      background: var(--dark);
+      border: 1px solid var(--medium-gray);
+      color: var(--light);
+      font-size: 14px;
+      resize: vertical;
+    }
+
+    .submit-btn {
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .submit-btn:hover {
+      background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+    }
+
+    /* Footer */
+    footer {
+      background: var(--dark);
+      padding: 30px 40px;
+      margin-top: 50px;
+      border-top: 1px solid var(--medium-gray);
+    }
+
+    .footer-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .footer-logo {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    .footer-links {
+      display: flex;
+      gap: 20px;
+    }
+
+    .footer-links a {
+      color: var(--light-gray);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .footer-links a:hover {
+      color: var(--primary);
+    }
+
+    .copyright {
+      color: var(--light-gray);
+      font-size: 14px;
+      margin-top: 20px;
+      text-align: center;
+    }
+
+    /* Responsividade */
+    @media (max-width: 992px) {
+      .movie-details {
+        flex-direction: column;
+      }
+
+      .movie-poster {
+        flex: none;
+        max-width: 300px;
+        margin: 0 auto;
+      }
+    }
+
+    @media (max-width: 768px) {
+      header {
+        padding: 15px 20px;
+        flex-direction: column;
+        gap: 15px;
+      }
+
+      main {
+        padding: 20px;
+      }
+
+      .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+      }
+
+      .filters {
+        flex-direction: column;
+      }
+
+      .search-box {
+        max-width: 100%;
+      }
+
+      .grid {
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      }
+    }
+
+    @media (max-width: 576px) {
+      .grid {
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      }
+
+      .card-img {
+        height: 240px;
+      }
+
+      .footer-content {
+        flex-direction: column;
+        gap: 20px;
+        text-align: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">
+      <div class="logo-icon">🎬</div>
+      <h1>CINEUP</h1>
+    </div>
+
+    <div class="header-buttons">
+      <a href="/" class="nav-btn">Home</a>
+      <a href="/login" class="nav-btn">Login</a>
+      <a href="/register" class="nav-btn">Register</a>
+    </div>
+
+    <div class="header-actions">
+      <button class="btn btn-primary" onclick="goToDashboard()">
+        <i class="fas fa-tachometer-alt"></i> Painel
+      </button>
+      <button class="btn btn-danger" onclick="logout()">
+        <i class="fas fa-sign-out-alt"></i> Sair
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <div class="page-header">
+      <h2 class="page-title">
+        <i class="fas fa-film"></i> Catálogo de Filmes
+      </h2>
+
+    </div>
+
+    <div class="filters">
+      <select class="filter-select" id="genreFilter">
+        <option value="">Todos os Gêneros</option>
+        <option value="acao">Ação</option>
+        <option value="aventura">Aventura</option>
+        <option value="comedia">Comédia</option>
+        <option value="drama">Drama</option>
+        <option value="ficcao">Ficção Científica</option>
+        <option value="fantasia">Fantasia</option>
+        <option value="suspense">Suspense</option>
+      </select>
+
+      <select class="filter-select" id="yearFilter">
+        <option value="">Todos os Anos</option>
+        <option value="2024">2024</option>
+        <option value="2023">2023</option>
+        <option value="2022">2022</option>
+        <option value="2021">2021</option>
+        <option value="2020">2020</option>
+      </select>
+
+      <select class="filter-select" id="ratingFilter">
+        <option value="">Todas as Avaliações</option>
+        <option value="5">5 Estrelas</option>
+        <option value="4">4+ Estrelas</option>
+        <option value="3">3+ Estrelas</option>
+      </select>
+
+      <div class="search-box">
+        <i class="fas fa-search"></i>
+        <input type="text" id="searchInput" placeholder="Pesquisar filmes...">
+      </div>
+    </div>
+
+    <div class="grid" id="moviesGrid">
+      <!-- Os cards de filmes serão gerados dinamicamente via JavaScript -->
+    </div>
+  </main>
+
+  <!-- Modal de Detalhes do Filme -->
+  <div class="modal" id="movieModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title" id="modalMovieTitle">Detalhes do Filme</h3>
+        <button class="close-btn" onclick="closeMovieModal()">&times;</button>
+      </div>
+      <div class="modal-body" id="modalMovieContent">
+        <!-- Conteúdo será preenchido via JavaScript -->
+      </div>
+    </div>
+  </div>
+<i><h3>Faça login para ver os filmes</h3></i>
+  <footer>
+    <div class="footer-content">
+      <div class="footer-logo">CINEUP</div>
+      <div class="footer-links">
+        <a href="#">Sobre</a>
+        <a href="#">Contato</a>
+        <a href="#">Termos de Uso</a>
+        <a href="#">Política de Privacidade</a>
+      </div>
+    </div>
+    <div class="copyright">
+      &copy; 2023 CINEUP - Todos os direitos reservados
+    </div>
+  </footer>
+
+  <script>
+    // Dados dos filmes
+    const movies = [
+      {
+        id: 1,
+        title: "Oppenheimer",
+        genre: "Drama Histórico",
+        year: 2023,
+        duration: "180 min",
+        rating: 4.8,
+        ratingCount: 1245,
+        description: "A história do físico J. Robert Oppenheimer e seu papel no desenvolvimento da bomba atômica durante a Segunda Guerra Mundial.",
+        image: "https://br.web.img3.acsta.net/c_310_420/pictures/23/05/08/10/29/0695770.jpg",
+        streaming: "https://www.primevideo.com/detail/0LTLQ7P1ASD8E1S6FKHTGLX4B6",
+        director: "Christopher Nolan",
+        cast: "Cillian Murphy, Emily Blunt, Matt Damon",
+        userRating: 0,
+        userReview: ""
+      },
+      {
+        id: 2,
+        title: "Interestelar",
+        genre: "Ficção Científica",
+        year: 2014,
+        duration: "169 min",
+        rating: 4.9,
+        ratingCount: 1987,
+        description: "Um grupo de exploradores viaja através de um buraco de minhoca no espaço na tentativa de garantir a sobrevivência da humanidade.",
+        image: "https://br.web.img3.acsta.net/c_310_420/pictures/14/10/31/20/39/476171.jpg",
+        streaming: "https://www.netflix.com/br/title/70305903",
+        director: "Christopher Nolan",
+        cast: "Matthew McConaughey, Anne Hathaway, Jessica Chastain",
+        userRating: 0,
+        userReview: ""
+      },
+      {
+        id: 3,
+        title: "Avatar: O Caminho da Água",
+        genre: "Ficção Científica",
+        year: 2022,
+        duration: "192 min",
+        rating: 4.3,
+        ratingCount: 876,
+        description: "Jake Sully vive com sua nova família no planeta Pandora. Quando uma ameaça familiar retorna, Jake deve travar uma guerra difícil.",
+        image: "https://br.web.img2.acsta.net/c_310_420/pictures/22/05/09/16/16/3197518.jpg",
+        streaming: "https://www.disneyplus.com/pt-br/movies/avatar-o-caminho-da-agua/6k4dKe0WpoL3",
+        director: "James Cameron",
+        cast: "Sam Worthington, Zoe Saldana, Sigourney Weaver",
+        userRating: 0,
+        userReview: ""
+      },
+      {
+        id: 4,
+        title: "Duna: Parte 2",
+        genre: "Ficção Científica",
+        year: 2024,
+        duration: "166 min",
+        rating: 4.7,
+        ratingCount: 932,
+        description: "Paul Atreides se une a Chani e aos Fremen enquanto busca vingança contra os conspiradores que destruíram sua família.",
+        image: "https://br.web.img3.acsta.net/c_310_420/pictures/23/05/26/17/47/1900372.jpg",
+        streaming: "https://www.max.com/br/pt/movies/duna-2/8a0a3d77-dune2",
+        director: "Denis Villeneuve",
+        cast: "Timothée Chalamet, Zendaya, Rebecca Ferguson",
+        userRating: 0,
+        userReview: ""
+      },
+      {
+        id: 5,
+        title: "Homem-Aranha: Sem Volta para Casa",
+        genre: "Ação",
+        year: 2021,
+        duration: "148 min",
+        rating: 4.6,
+        ratingCount: 1543,
+        description: "Peter Parker pede ajuda ao Doutor Estranho para que todos esqueçam sua identidade, mas o feitiço dá errado.",
+        image: "https://br.web.img3.acsta.net/c_310_420/pictures/21/11/08/16/02/3963914.png",
+        streaming: "https://www.netflix.com/br/title/81492908",
+        director: "Jon Watts",
+        cast: "Tom Holland, Zendaya, Benedict Cumberbatch",
+        userRating: 0,
+        userReview: ""
+      },
+      {
+        id: 6,
+        title: "The Batman",
+        genre: "Ação",
+        year: 2022,
+        duration: "176 min",
+        rating: 4.4,
+        ratingCount: 1123,
+        description: "Batman investiga o submundo de Gotham City quando um assassino sádico deixa para trás um rastro de pistas enigmáticas.",
+        image: "https://br.web.img2.acsta.net/c_310_420/pictures/22/03/02/19/26/3666027.jpg",
+        streaming: "https://www.max.com/br/pt/movies/the-batman/4b45b05a-617d-49b6-b4e3-6edc21b67b75",
+        director: "Matt Reeves",
+        cast: "Robert Pattinson, Zoë Kravitz, Paul Dano",
+        userRating: 0,
+        userReview: ""
+      },
+      {
+        id: 7,
+        title: "Vingadores: Ultimato",
+        genre: "Ação",
+        year: 2019,
+        duration: "181 min",
+        rating: 4.8,
+        ratingCount: 2234,
+        description: "Os Vingadores restantes precisam encontrar uma maneira de recuperar seus aliados para um confronto final com Thanos.",
+        image: "https://br.web.img2.acsta.net/c_310_420/pictures/19/04/26/17/30/2428965.jpg",
+        streaming: "https://www.disneyplus.com/pt-br/movies/avengers-endgame/aRbVJUb2h2Rf",
+        director: "Anthony e Joe Russo",
+        cast: "Robert Downey Jr., Chris Evans, Scarlett Johansson",
+        userRating: 0,
+        userReview: ""
+      },
+      {
+        id: 8,
+        title: "John Wick 4",
+        genre: "Ação",
+        year: 2023,
+        duration: "169 min",
+        rating: 4.5,
+        ratingCount: 987,
+        description: "John Wick descobre um caminho para derrotar a Alta Cúpula. Mas antes que possa ganhar sua liberdade, Wick deve enfrentar um novo inimigo.",
+        image: "https://br.web.img2.acsta.net/c_310_420/pictures/22/12/05/09/07/2007563.jpg",
+        streaming: "https://www.primevideo.com/detail/John-Wick-4/0JGHF1M6S8P8T3I8SHCLYRT3A9",
+        director: "Chad Stahelski",
+        cast: "Keanu Reeves, Donnie Yen, Bill Skarsgård",
+        userRating: 0,
+        userReview: ""
+      }
+    ];
+
+    // Função para renderizar os filmes
+    function renderMovies() {
+      const moviesGrid = document.getElementById('moviesGrid');
+      moviesGrid.innerHTML = '';
+
+      movies.forEach(movie => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = `
+          <div class="card-badge">${movie.year}</div>
+          <img src="${movie.image}" alt="${movie.title}" class="card-img">
+          <div class="card-content">
+            <h3 class="card-title">${movie.title}</h3>
+            <div class="card-meta">
+              <span class="card-genre">${movie.genre}</span>
+              <div class="card-rating">
+                <i class="fas fa-star"></i>
+                <span>${movie.rating}</span>
+              </div>
+            </div>
+            <p class="card-description">${movie.description}</p>
+            <div class="card-actions">
+              <a href="${movie.streaming}" class="card-btn watch-btn" target="_blank">
+                <i class="fas fa-play"></i> Assistir
+              </a>
+              <button class="card-btn details-btn" onclick="openMovieModal(${movie.id})">
+                <i class="fas fa-info-circle"></i> Detalhes
+              </button>
+            </div>
+          </div>
+        `;
+        moviesGrid.appendChild(card);
+      });
+    }
+
+    // Função para abrir o modal de detalhes do filme
+    function openMovieModal(movieId) {
+      const movie = movies.find(m => m.id === movieId);
+      if (!movie) return;
+
+      document.getElementById('modalMovieTitle').textContent = movie.title;
+
+      const modalContent = document.getElementById('modalMovieContent');
+      modalContent.innerHTML = `
+        <div class="movie-details">
+          <div class="movie-poster">
+            <img src="${movie.image}" alt="${movie.title}">
+          </div>
+          <div class="movie-info">
+            <div class="movie-meta">
+              <div class="meta-item">
+                <i class="fas fa-calendar-alt"></i>
+                <span>${movie.year}</span>
+              </div>
+              <div class="meta-item">
+                <i class="fas fa-clock"></i>
+                <span>${movie.duration}</span>
+              </div>
+              <div class="meta-item">
+                <i class="fas fa-film"></i>
+                <span>${movie.genre}</span>
+              </div>
+            </div>
+            <div class="movie-description">
+              <p>${movie.description}</p>
+            </div>
+            <div class="movie-meta">
+              <div class="meta-item">
+                <i class="fas fa-user"></i>
+                <span><strong>Diretor:</strong> ${movie.director}</span>
+              </div>
+            </div>
+            <div class="movie-meta">
+              <div class="meta-item">
+                <i class="fas fa-users"></i>
+                <span><strong>Elenco:</strong> ${movie.cast}</span>
+              </div>
+            </div>
+            <div class="rating-section">
+              <h4 class="rating-title">Avaliação do Filme</h4>
+              <div class="user-rating">
+                <div class="rating-value">${movie.rating}</div>
+                <div class="stars">
+                  ${generateStars(movie.rating)}
+                </div>
+                <div class="rating-count">(${movie.ratingCount} avaliações)</div>
+              </div>
+
+              <h4 class="rating-title" style="margin-top: 20px;">Sua Avaliação</h4>
+              <div class="stars" id="userStars">
+                ${generateUserStars(movie.userRating)}
+              </div>
+
+              <div class="review-form">
+                <div class="form-group">
+                  <label for="userReview">Sua Resenha</label>
+                  <textarea class="form-control" id="userReview" rows="4" placeholder="Escreva sua resenha sobre o filme...">${movie.userReview}</textarea>
+                </div>
+                <button class="submit-btn" onclick="submitReview(${movie.id})">Salvar Avaliação</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      // Adicionar eventos às estrelas de avaliação do usuário
+      const userStars = document.querySelectorAll('#userStars .star');
+      userStars.forEach((star, index) => {
+        star.addEventListener('click', () => {
+          setUserRating(movieId, index + 1);
+        });
+      });
+
+      document.getElementById('movieModal').style.display = 'flex';
+    }
+
+    // Função para fechar o modal
+    function closeMovieModal() {
+      document.getElementById('movieModal').style.display = 'none';
+    }
+
+    // Função para gerar estrelas baseadas na avaliação
+    function generateStars(rating) {
+      let stars = '';
+      const fullStars = Math.floor(rating);
+      const hasHalfStar = rating % 1 >= 0.5;
+
+      for (let i = 1; i <= 5; i++) {
+        if (i <= fullStars) {
+          stars += '<i class="fas fa-star active"></i>';
+        } else if (i === fullStars + 1 && hasHalfStar) {
+          stars += '<i class="fas fa-star-half-alt active"></i>';
+        } else {
+          stars += '<i class="far fa-star"></i>';
+        }
+      }
+
+      return stars;
+    }
+
+    // Função para gerar estrelas de avaliação do usuário
+    function generateUserStars(userRating) {
+      let stars = '';
+      for (let i = 1; i <= 5; i++) {
+        if (i <= userRating) {
+          stars += `<i class="fas fa-star star active" data-rating="${i}"></i>`;
+        } else {
+          stars += `<i class="far fa-star star" data-rating="${i}"></i>`;
+        }
+      }
+      return stars;
+    }
+
+    // Função para definir a avaliação do usuário
+    function setUserRating(movieId, rating) {
+      const movie = movies.find(m => m.id === movieId);
+      if (movie) {
+        movie.userRating = rating;
+
+        // Atualiar as estrelas no modal
+        const userStars = document.querySelectorAll('#userStars .star');
+        userStars.forEach((star, index) => {
+          if (index < rating) {
+            star.classList.remove('far');
+            star.classList.add('fas', 'active');
+          } else {
+            star.classList.remove('fas', 'active');
+            star.classList.add('far');
+          }
+        });
+      }
+    }
+
+    // Função para enviar a resenha do usuário
+    function submitReview(movieId) {
+      const movie = movies.find(m => m.id === movieId);
+      if (movie) {
+        const reviewText = document.getElementById('userReview').value;
+        movie.userReview = reviewText;
+
+        alert('Avaliação salva com sucesso!');
+        closeMovieModal();
+      }
+    }
+
+    // Função para voltar ao painel
+    function goToDashboard() {
+      window.location.href = '/';
+    }
+
+    // Função para logout
+    function logout() {
+      if (confirm('Tem certeza que deseja sair?')) {
+        window.location.href = '/login';
+      }
+    }
+
+    // Função para abrir modal de adicionar filme (simulação)
+    function openAddMovieModal() {
+      alert('Funcionalidade de adicionar filme será implementada em breve!');
+    }
+
+    // Inicializar a página
+    document.addEventListener('DOMContentLoaded', function() {
+      renderMovies();
+
+      // Fechar modal ao clicar fora dele
+      window.addEventListener('click', function(event) {
+        const modal = document.getElementById('movieModal');
+        if (event.target === modal) {
+          closeMovieModal();
+        }
+      });
+    });
+    ]
+  </script>
+
+</body>
+</html>

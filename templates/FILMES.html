@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Adicionar Filme - CINEUP</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+            color: white;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(42, 42, 42, 0.9);
+            padding: 30px;
+            border-radius: 12px;
+            border: 1px solid #0a84ff;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #0a84ff;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #6c757d;
+            border-radius: 6px;
+            background: #1a1a1a;
+            color: white;
+            font-size: 16px;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: #0a84ff;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #0a84ff, #0066cc);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #0066cc, #0a84ff);
+            transform: translateY(-2px);
+        }
+
+        .btn-back {
+            background: #6c757d;
+            color: white;
+            text-decoration: none;
+            display: inline-block;
+            margin-right: 15px;
+        }
+
+        .btn-back:hover {
+            background: #5a6268;
+        }
+
+        .form-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 30px;
+        }
+
+        .image-preview {
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        .image-preview img {
+            max-width: 200px;
+            max-height: 300px;
+            border-radius: 8px;
+            border: 2px solid #0a84ff;
+        }
+
+        .help-text {
+            font-size: 12px;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+
+        .required {
+            color: #e50914;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>{% if filme %}Editar Filme{% else %}Adicionar Novo Filme{% endif %}</h1>
+
+        <form method="POST" action="{% if filme %}/edit/{{ filme.id }}{% else %}/filmes{% endif %}">
+            <div class="form-group">
+                <label for="titulo">Título do Filme <span class="required">*</span></label>
+                <input type="text" id="titulo" name="titulo"
+                       value="{{ filme.titulo if filme }}" required>
+            </div>
+
+            <div class="form-group">
+                <label for="genero">Gênero <span class="required">*</span></label>
+                <select id="genero" name="genero" required>
+                    <option value="">Selecione um gênero</option>
+                    <option value="Ação" {% if filme and filme.genero == 'Ação' %}selected{% endif %}>Ação</option>
+                    <option value="Drama" {% if filme and filme.genero == 'Drama' %}selected{% endif %}>Drama</option>
+                    <option value="Comédia" {% if filme and filme.genero == 'Comédia' %}selected{% endif %}>Comédia</option>
+                    <option value="Ficção Científica" {% if filme and filme.genero == 'Ficção Científica' %}selected{% endif %}>Ficção Científica</option>
+                    <option value="Suspense" {% if filme and filme.genero == 'Suspense' %}selected{% endif %}>Suspense</option>
+                    <option value="Terror" {% if filme and filme.genero == 'Terror' %}selected{% endif %}>Terror</option>
+                    <option value="Romance" {% if filme and filme.genero == 'Romance' %}selected{% endif %}>Romance</option>
+                    <option value="Animação" {% if filme and filme.genero == 'Animação' %}selected{% endif %}>Animação</option>
+                    <option value="Documentário" {% if filme and filme.genero == 'Documentário' %}selected{% endif %}>Documentário</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="ano">Ano de Lançamento <span class="required">*</span></label>
+                <input type="number" id="ano" name="ano"
+                       value="{{ filme.ano if filme }}"
+                       min="1900" max="2030" required>
+            </div>
+
+            <div class="form-group">
+                <label for="imagem">URL da Imagem (Poster) <span class="required">*</span></label>
+                <input type="url" id="imagem" name="imagem"
+                       value="{{ filme.imagem if filme }}"
+                       placeholder="https://exemplo.com/poster.jpg" required>
+                <div class="help-text">Cole a URL de uma imagem do poster do filme</div>
+                <div class="image-preview" id="imagePreview">
+                    {% if filme and filme.imagem %}
+                    <img src="{{ filme.imagem }}" alt="Preview" onerror="this.style.display='none'">
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="descricao">Descrição</label>
+                <textarea id="descricao" name="descricao"
+                          placeholder="Sinopse do filme...">{% if filme %}{{ filme.descricao or '' }}{% endif %}</textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="duracao">Duração</label>
+                <input type="text" id="duracao" name="duracao"
+                       value="{{ filme.duracao if filme }}"
+                       placeholder="ex: 120 min">
+            </div>
+
+            <div class="form-group">
+                <label for="diretor">Diretor</label>
+                <input type="text" id="diretor" name="diretor"
+                       value="{{ filme.diretor if filme }}"
+                       placeholder="Nome do diretor">
+            </div>
+
+            <div class="form-group">
+                <label for="elenco">Elenco Principal</label>
+                <textarea id="elenco" name="elenco"
+                          placeholder="Atores principais...">{% if filme %}{{ filme.elenco or '' }}{% endif %}</textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="streaming">Link para Assistir</label>
+                <input type="url" id="streaming" name="streaming"
+                       value="{{ filme.streaming if filme }}"
+                       placeholder="https://streaming.com/filme">
+            </div>
+
+            <div class="form-actions">
+                <a href="/crud" class="btn btn-back">← Voltar</a>
+                <button type="submit" class="btn btn-primary">
+                    {% if filme %}Atualizar Filme{% else %}Adicionar Filme{% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        // Preview da imagem em tempo real
+        document.getElementById('imagem').addEventListener('input', function(e) {
+            const preview = document.getElementById('imagePreview');
+            const url = e.target.value;
+
+            if (url) {
+                preview.innerHTML = `<img src="${url}" alt="Preview" onerror="this.style.display='none'">`;
+            } else {
+                preview.innerHTML = '';
+            }
+        });
+
+        // Carregar preview se já tiver imagem ao editar
+        window.addEventListener('load', function() {
+            const imagemInput = document.getElementById('imagem');
+            if (imagemInput.value) {
+                const event = new Event('input');
+                imagemInput.dispatchEvent(event);
+            }
+        });
+    </script>
+</body>
+</html>
