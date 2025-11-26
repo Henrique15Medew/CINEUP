@@ -1,9 +1,11 @@
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, scoped_session
 from modelo import Base, Usuario, Filme, Avaliacao
 import os
 from dotenv import load_dotenv
+from flask import send_from_directory
+from sqlalchemy.exc import SQLAlchemyError, PendingRollbackError
 
 load_dotenv()
 
@@ -11,9 +13,34 @@ app = Flask(__name__)
 app.secret_key = "supersecretkey"  # Necessário para sessões
 
 DATABASE_URL = os.getenv("DATABASE_URL")
-engine = create_engine(DATABASE_URL)
-Session = sessionmaker(bind=engine)
+engine = create_engine(DATABASE_URL, pool_pre_ping=True, pool_recycle=3600)
+Session = scoped_session(sessionmaker(bind=engine))
 db_session = Session()
+
+
+# Função helper para gerenciar transações de forma segura
+def safe_db_commit():
+    """Executa commit com tratamento seguro de transações"""
+    try:
+        db_session.commit()
+        return True
+    except PendingRollbackError:
+        db_session.rollback()
+        try:
+            db_session.commit()
+            return True
+        except Exception as e:
+            db_session.rollback()
+            print(f"❌ Erro após rollback: {e}")
+            return False
+    except SQLAlchemyError as e:
+        db_session.rollback()
+        print(f"❌ Erro de banco: {e}")
+        return False
+    except Exception as e:
+        db_session.rollback()
+        print(f"❌ Erro inesperado: {e}")
+        return False
 
 
 # ---------------- ROTAS ---------------- #
@@ -93,7 +120,10 @@ def register():
             novo_usuario.set_senha(senha)
 
             db_session.add(novo_usuario)
-            db_session.commit()
+
+            # Usar commit seguro
+            if not safe_db_commit():
+                return render_template('register.html', error="Erro interno no cadastro. Tente novamente.")
 
             # Loga o usuário automaticamente
             session['usuario_id'] = novo_usuario.id
@@ -160,8 +190,11 @@ def avaliar_filme(filme_id):
             db_session.add(nova_avaliacao)
             print(f"✅ Nova avaliação criada para o filme {filme_id}")
 
-        db_session.commit()
-        return redirect(url_for('catalogo', success="Avaliação salva com sucesso!"))
+        # Usar commit seguro
+        if safe_db_commit():
+            return redirect(url_for('catalogo', success="Avaliação salva com sucesso!"))
+        else:
+            return redirect(url_for('catalogo', error="Erro ao salvar avaliação"))
 
     except Exception as e:
         db_session.rollback()
@@ -214,12 +247,18 @@ def usuarios():
             novo_usuario.set_senha(senha)
 
             db_session.add(novo_usuario)
-            db_session.commit()
 
-            usuarios = db_session.query(Usuario).all()
-            return render_template('USUARIOS.html',
-                                   usuarios=usuarios,
-                                   success="Usuário cadastrado com sucesso!")
+            # Usar commit seguro
+            if safe_db_commit():
+                usuarios = db_session.query(Usuario).all()
+                return render_template('USUARIOS.html',
+                                       usuarios=usuarios,
+                                       success="Usuário cadastrado com sucesso!")
+            else:
+                usuarios = db_session.query(Usuario).all()
+                return render_template('USUARIOS.html',
+                                       usuarios=usuarios,
+                                       error="Erro ao cadastrar usuário")
 
         # GET - Mostrar lista de usuários
         usuarios = db_session.query(Usuario).all()
@@ -244,8 +283,10 @@ def tornar_admin(usuario_id):
         usuario = db_session.query(Usuario).get(usuario_id)
         if usuario:
             usuario.is_admin = True
-            db_session.commit()
-
+            if safe_db_commit():
+                return redirect(url_for('usuarios'))
+            else:
+                return redirect(url_for('usuarios'))
         return redirect(url_for('usuarios'))
     except Exception as e:
         db_session.rollback()
@@ -270,8 +311,10 @@ def excluir_usuario(usuario_id):
         usuario = db_session.query(Usuario).get(usuario_id)
         if usuario:
             db_session.delete(usuario)
-            db_session.commit()
-
+            if safe_db_commit():
+                return redirect(url_for('usuarios'))
+            else:
+                return redirect(url_for('usuarios'))
         return redirect(url_for('usuarios'))
     except Exception as e:
         db_session.rollback()
@@ -279,37 +322,51 @@ def excluir_usuario(usuario_id):
         return redirect(url_for('usuarios'))
 
 
-# Adicionar filmes (admin)
+# Adicionar filmes (admin) - CORRIGIDA
 @app.route('/filmes', methods=['GET', 'POST'])
 def filmes():
     if 'usuario_id' not in session or not session.get('is_admin'):
         return "Acesso negado! Somente admin pode adicionar filmes."
 
     if request.method == 'POST':
-        titulo = request.form['titulo']
-        genero = request.form['genero']
-        ano = request.form['ano']
-        imagem = request.form['imagem']
-        descricao = request.form.get('descricao', '')
-        duracao = request.form.get('duracao', '')
-        diretor = request.form.get('diretor', '')
-        elenco = request.form.get('elenco', '')
-        streaming = request.form.get('streaming', '#')
+        try:
+            # Limpar qualquer transação pendente antes de começar
+            db_session.rollback()
 
-        novo_filme = Filme(
-            titulo=titulo,
-            genero=genero,
-            ano=ano,
-            imagem=imagem,
-            descricao=descricao,
-            duracao=duracao,
-            diretor=diretor,
-            elenco=elenco,
-            streaming=streaming
-        )
-        db_session.add(novo_filme)
-        db_session.commit()
-        return redirect(url_for('crud'))
+            titulo = request.form['titulo']
+            genero = request.form['genero']
+            ano = request.form['ano']
+            imagem = request.form['imagem']
+            descricao = request.form.get('descricao', '')
+            duracao = request.form.get('duracao', '')
+            diretor = request.form.get('diretor', '')
+            elenco = request.form.get('elenco', '')
+            streaming = request.form.get('streaming', '#')
+
+            novo_filme = Filme(
+                titulo=titulo,
+                genero=genero,
+                ano=ano,
+                imagem=imagem,
+                descricao=descricao,
+                duracao=duracao,
+                diretor=diretor,
+                elenco=elenco,
+                streaming=streaming
+            )
+
+            db_session.add(novo_filme)
+
+            # Usar commit seguro
+            if safe_db_commit():
+                return redirect(url_for('crud'))
+            else:
+                return render_template('FILMES.html', error="Erro ao adicionar filme. Tente novamente.")
+
+        except Exception as e:
+            db_session.rollback()
+            print(f"❌ Erro ao adicionar filme: {e}")
+            return render_template('FILMES.html', error=f"Erro ao adicionar filme: {str(e)}")
 
     return render_template('FILMES.html')
 
@@ -332,18 +389,28 @@ def edit_filme(id):
 
     filme = db_session.query(Filme).get(id)
     if request.method == 'POST':
-        filme.titulo = request.form['titulo']
-        filme.genero = request.form['genero']
-        filme.ano = request.form['ano']
-        filme.imagem = request.form['imagem']
-        filme.descricao = request.form.get('descricao', '')
-        filme.duracao = request.form.get('duracao', '')
-        filme.diretor = request.form.get('diretor', '')
-        filme.elenco = request.form.get('elenco', '')
-        filme.streaming = request.form.get('streaming', '#')
+        try:
+            db_session.rollback()  # Limpar transação pendente
 
-        db_session.commit()
-        return redirect(url_for('crud'))
+            filme.titulo = request.form['titulo']
+            filme.genero = request.form['genero']
+            filme.ano = request.form['ano']
+            filme.imagem = request.form['imagem']
+            filme.descricao = request.form.get('descricao', '')
+            filme.duracao = request.form.get('duracao', '')
+            filme.diretor = request.form.get('diretor', '')
+            filme.elenco = request.form.get('elenco', '')
+            filme.streaming = request.form.get('streaming', '#')
+
+            if safe_db_commit():
+                return redirect(url_for('crud'))
+            else:
+                return render_template('FILMES.html', filme=filme, error="Erro ao editar filme")
+
+        except Exception as e:
+            db_session.rollback()
+            print(f"❌ Erro ao editar filme: {e}")
+            return render_template('FILMES.html', filme=filme, error=f"Erro ao editar filme: {str(e)}")
 
     return render_template('FILMES.html', filme=filme)
 
@@ -354,10 +421,20 @@ def delete_filme(id):
     if 'usuario_id' not in session or not session.get('is_admin'):
         return "Acesso negado!"
 
-    filme = db_session.query(Filme).get(id)
-    db_session.delete(filme)
-    db_session.commit()
-    return redirect(url_for('crud'))
+    try:
+        db_session.rollback()  # Limpar transação pendente
+        filme = db_session.query(Filme).get(id)
+        if filme:
+            db_session.delete(filme)
+            if safe_db_commit():
+                return redirect(url_for('crud'))
+            else:
+                return redirect(url_for('crud'))
+        return redirect(url_for('crud'))
+    except Exception as e:
+        db_session.rollback()
+        print(f"❌ Erro ao deletar filme: {e}")
+        return redirect(url_for('crud'))
 
 
 @app.route('/api/minhas-avaliacoes')
@@ -386,6 +463,7 @@ def sync_filmes():
         return {"error": "Acesso negado"}, 403
 
     try:
+        db_session.rollback()  # Limpar transação pendente
         filmes_data = request.json.get('filmes', [])
 
         for filme_data in filmes_data:
@@ -404,8 +482,10 @@ def sync_filmes():
                 db_session.add(novo_filme)
                 print(f"✅ Filme adicionado: {filme_data['title']} ({filme_data['year']})")
 
-        db_session.commit()
-        return {"success": "Filmes sincronizados com sucesso"}, 200
+        if safe_db_commit():
+            return {"success": "Filmes sincronizados com sucesso"}, 200
+        else:
+            return {"error": "Erro ao sincronizar filmes"}, 500
 
     except Exception as e:
         db_session.rollback()
@@ -433,6 +513,7 @@ def api_filmes():
 @app.route('/criar-filmes-padrao')
 def criar_filmes_padrao():
     try:
+        db_session.rollback()  # Limpar transação pendente
         filmes_padrao = [
             {"titulo": "Oppenheimer", "genero": "Drama Histórico", "ano": 2023},
             {"titulo": "Interestelar", "genero": "Ficção Científica", "ano": 2014},
@@ -461,8 +542,10 @@ def criar_filmes_padrao():
                 filmes_criados += 1
                 print(f"✅ Filme criado: {filme_data['titulo']}")
 
-        db_session.commit()
-        return f"✅ {filmes_criados} filmes criados com sucesso!"
+        if safe_db_commit():
+            return f"✅ {filmes_criados} filmes criados com sucesso!"
+        else:
+            return f"❌ Erro ao criar filmes"
 
     except Exception as e:
         db_session.rollback()
@@ -523,6 +606,7 @@ def atualizar_filmes_existente():
         return "Acesso negado! Somente admin pode atualizar filmes."
 
     try:
+        db_session.rollback()  # Limpar transação pendente
         # Dados completos para os filmes existentes
         filmes_info = {
             "Oppenheimer": {
@@ -623,8 +707,10 @@ def atualizar_filmes_existente():
                 filmes_atualizados += 1
                 print(f"✅ Filme atualizado: {filme.titulo}")
 
-        db_session.commit()
-        return f"✅ {filmes_atualizados} filmes atualizados com sucesso!"
+        if safe_db_commit():
+            return f"✅ {filmes_atualizados} filmes atualizados com sucesso!"
+        else:
+            return f"❌ Erro ao atualizar filmes"
 
     except Exception as e:
         db_session.rollback()
@@ -638,6 +724,7 @@ def limpar_duplicados():
         return "Acesso negado"
 
     try:
+        db_session.rollback()  # Limpar transação pendente
         # Encontrar e-mails duplicados
         todos_usuarios = db_session.query(Usuario).all()
         emails_vistos = set()
@@ -655,12 +742,30 @@ def limpar_duplicados():
             db_session.delete(usuario)
             print(f"❌ Removido usuário duplicado: {usuario.email}")
 
-        db_session.commit()
-        return f"✅ {len(usuarios_para_remover)} usuários duplicados removidos!"
+        if safe_db_commit():
+            return f"✅ {len(usuarios_para_remover)} usuários duplicados removidos!"
+        else:
+            return f"❌ Erro ao remover duplicados"
 
     except Exception as e:
         db_session.rollback()
         return f"❌ Erro ao limpar duplicados: {e}"
+
+
+@app.route('/imagem/<path:filename>')
+def serve_image(filename):
+    return send_from_directory('imagem', filename)
+
+
+# Teardown para fechar a sessão adequadamente
+@app.teardown_appcontext
+def shutdown_session(exception=None):
+    try:
+        if exception:
+            db_session.rollback()
+        db_session.remove()
+    except:
+        pass
 
 
 if __name__ == '__main__':
